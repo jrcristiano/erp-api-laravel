@@ -16,4 +16,23 @@ class Product extends Model
         'category_id',
         'description'
     ];
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function getPriceAttribute()
+    {
+        $explode = explode('.', $this->attributes['price']);
+        $value = $explode[0];
+        $cents = substr($explode[1], 0, 2);
+        
+        return "{$value}.{$cents}";
+    }
+
+    public function setPriceAttribute($price)
+    {
+        $this->attributes['price'] = number_format($price, 4, '.', '');
+    }
 }

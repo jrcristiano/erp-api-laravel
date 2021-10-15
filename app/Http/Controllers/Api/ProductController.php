@@ -20,7 +20,7 @@ class ProductController extends Controller
     {
         return response()->json([
             'status' => 200,
-            'data' => $this->productService->fetchAll($request)
+            'data' => $this->productService->fetchAll($request, ['category'])
         ]);
     }
 
@@ -49,7 +49,7 @@ class ProductController extends Controller
     {
         return response()->json([
             'status' => 200,
-            'data' => $this->productService->findOrFail($id),
+            'data' => $this->productService->findOrFail($id, ['category']),
         ], 200);
     }
 
@@ -64,7 +64,7 @@ class ProductController extends Controller
     {
         $data = $request->only(array_keys($request->rules()));
         $data['id'] = $id;
-
+        
         $this->productService->save($data);
         return response()->json([
             'status' => 200,

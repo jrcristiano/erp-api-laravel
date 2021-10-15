@@ -20,7 +20,7 @@ class CategoryController extends Controller
     {
         return response()->json([
             'status' => 200,
-            'data' => $this->categoryService->fetchAll($request)
+            'data' => $this->categoryService->fetchAll($request, ['products'])
         ]);
     }
 

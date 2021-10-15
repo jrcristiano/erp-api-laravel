@@ -15,36 +15,36 @@ abstract class Service
         return $this->repository->paginate($perPage);
     }
 
-    public function fetchAll(Request $request)
+    public function fetchAll(Request $request, array $with = [])
     {
         try {
             $filters = $this->filters($request);
-            return $this->repository->fetchAll($filters);
+            return $this->repository->fetchAll($filters, $with);
 
         } catch (Exception $exception) {
             throw new Exception('Erro ao buscar lista de dados: parâmetros inválidos.');
         }
     }
 
-    public function first()
+    public function first(array $with = [])
     {
-        return $this->repository->first();
+        return $this->repository->first($with);
     }
 
-    public function findOrFail(int $id)
+    public function findOrFail(int $id, array $with = [])
     {
         try {
-            return $this->repository->findOrFail($id);
+            return $this->repository->findOrFail($id, $with);
 
         } catch (Exception $exception) {
             throw new Exception("Não há resultados correspondentes para o id {$id}.");
         }
     }
 
-    public function find(int $id)
+    public function find(int $id, array $with = [])
     {
         try {
-            return $this->repository->find($id);
+            return $this->repository->find($id, $with);
 
         } catch (Exception $exception) {
             throw new Exception("Não há resultados correspondentes para o id {$id}.");

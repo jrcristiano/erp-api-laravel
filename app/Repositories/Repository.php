@@ -15,10 +15,10 @@ abstract class Repository
         return $this->model->paginate($perPage);
     }
 
-    public function fetchAll(array $filter)
+    public function fetchAll(array $filter, array $with = [])
     {
         extract($filter);
-        
+
         $query = $this->model->when($sortBy, 
             function ($query) use ($sortBy, $orderBy) {
                 if (strpos($sortBy, ',') == 0) {
@@ -33,34 +33,61 @@ abstract class Repository
         ->when($offset && (isset($paginate) == false || $paginate == false),
             function ($query) use ($offset, $limit) {
                 $query->skip($offset)->take($limit);
+        })
+        ->when($with != [], function ($query) use ($with) {
+            foreach ($with as $model) {
+                $query->with($model);
+            }
         });
 
         return $filter['paginated'] ? $query->paginate($filter['perPage']) : $query->get();
     }
 
-    public function first()
+    public function first(array $with = [])
     {
-        return $this->model->first();
+        return $this->model->when($with != [], 
+            function ($query) use ($with) {
+                foreach ($with as $model) {
+                    $query->with($model);
+                }
+        })
+        ->first();
     }
 
-    public function findOrFail(int $id, $trashed = false)
+    public function findOrFail(int $id, array $with = [], $trashed = false)
     {
+        $query = $this->model
+            ->when($with != [], function ($query) use ($with) {
+                foreach ($with as $model) {
+                    $query->with($model);
+                }
+        });
+
         if ($trashed) {
-            return $this->model->withTrashed()
+            return $query->withTrashed()
                 ->findOrFail($id);
         }
 
-        return $this->model->findOrFail($id);
+        return $query->findOrFail($id);
     }
 
-    public function find(int $id, $trashed = false)
+    public function find(int $id, array $with = [], $trashed = false)
     {
+        $query = $this->model
+            ->when($with != [], function ($query) use ($with) {
+                foreach ($with as $model) {
+                    $query->with($model);
+                }
+        });
+
         if ($trashed) {
-            return $this->model->withTrashed()
+            return $query->with($with)
+                ->withTrashed()
                 ->find($id);
         }
 
-        return $this->model->find($id);
+        return $query->with($with)
+            ->find($id);
     }
 
     public function create(array $data)

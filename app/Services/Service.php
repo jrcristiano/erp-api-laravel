@@ -15,36 +15,36 @@ abstract class Service
         return $this->repository->paginate($perPage);
     }
 
-    public function fetchAll(Request $request, array $with = [])
+    public function fetchAll(Request $request, array $relations = [])
     {
         try {
             $filters = $this->filters($request);
-            return $this->repository->fetchAll($filters, $with);
+            return $this->repository->fetchAll($filters, $relations);
 
         } catch (Exception $exception) {
             throw new Exception('Erro ao buscar lista de dados: parâmetros inválidos.');
         }
     }
 
-    public function first(array $with = [])
+    public function first(array $relations = [])
     {
-        return $this->repository->first($with);
+        return $this->repository->first($relations);
     }
 
-    public function findOrFail(int $id, array $with = [])
+    public function findOrFail(int $id, array $relations = [])
     {
         try {
-            return $this->repository->findOrFail($id, $with);
+            return $this->repository->findOrFail($id, $relations);
 
         } catch (Exception $exception) {
             throw new Exception("Não há resultados correspondentes para o id {$id}.");
         }
     }
 
-    public function find(int $id, array $with = [])
+    public function find(int $id, array $relations = [])
     {
         try {
-            return $this->repository->find($id, $with);
+            return $this->repository->find($id, $relations);
 
         } catch (Exception $exception) {
             throw new Exception("Não há resultados correspondentes para o id {$id}.");
@@ -124,6 +124,7 @@ abstract class Service
 
     protected function filters(Request $request): array
     {
+        $filter['columns'] = $request->get('columns') ?? '*';
         $filter['orderBy'] = $request->get('orderBy') ?? 'asc';
         $filter['sortBy'] = $request->get('sortBy') ?? 'id';
         $filter['paginated'] = $request->get('paginated') == 'true' ? true : false;

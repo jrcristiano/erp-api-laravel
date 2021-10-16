@@ -15,51 +15,55 @@ abstract class Repository
         return $this->model->paginate($perPage);
     }
 
-    public function fetchAll(array $filter, array $with = [])
+    public function fetchAll(array $filter, array $relations = [])
+    {
+        $query = $this->query($filter, $relations);
+        return $filter['paginated'] ? $query->paginate($filter['perPage']) : $query->get();
+    }
+
+    private function query(array $filter, array $relations)
     {
         extract($filter);
+        return $this->model->select($columns)
+            ->when($sortBy, 
+                function ($query) use ($sortBy, $orderBy) {
+                    if (strpos($sortBy, ',') == 0) {
+                        return $query->orderBy($sortBy, $orderBy);
+                    }
 
-        $query = $this->model->when($sortBy, 
-            function ($query) use ($sortBy, $orderBy) {
-                if (strpos($sortBy, ',') == 0) {
-                    return $query->orderBy($sortBy, $orderBy);
-                }
-
-                $sortBy = explode(',', $sortBy);
-                foreach ($sortBy as $column) {
-                    $query->orderBy($column, $orderBy);
-                }
+                    $sortBy = explode(',', $sortBy);
+                    foreach ($sortBy as $column) {
+                        $query->orderBy($column, $orderBy);
+                    }
         })
         ->when($offset && (isset($paginate) == false || $paginate == false),
             function ($query) use ($offset, $limit) {
                 $query->skip($offset)->take($limit);
         })
-        ->when($with != [], function ($query) use ($with) {
-            foreach ($with as $model) {
-                $query->with($model);
+        ->when($relations != [], function ($query) use ($relations) {
+            foreach ($relations as $relation) {
+                $query->with($relation);
             }
-        });
-
-        return $filter['paginated'] ? $query->paginate($filter['perPage']) : $query->get();
+        }); 
     }
 
-    public function first(array $with = [])
+    public function first(array $relations = [])
     {
-        return $this->model->when($with != [], 
-            function ($query) use ($with) {
-                foreach ($with as $model) {
-                    $query->with($model);
+        return $this->model->when($relations != [], 
+            function ($query) use ($relations) {
+                foreach ($relations as $relation) {
+                    $query->with($relation);
                 }
         })
         ->first();
     }
 
-    public function findOrFail(int $id, array $with = [], $trashed = false)
+    public function findOrFail(int $id, array $relations = [], $trashed = false)
     {
         $query = $this->model
-            ->when($with != [], function ($query) use ($with) {
-                foreach ($with as $model) {
-                    $query->with($model);
+            ->when($relations != [], function ($query) use ($relations) {
+                foreach ($relations as $relation) {
+                    $query->with($relation);
                 }
         });
 
@@ -71,22 +75,22 @@ abstract class Repository
         return $query->findOrFail($id);
     }
 
-    public function find(int $id, array $with = [], $trashed = false)
+    public function find(int $id, array $relations = [], $trashed = false)
     {
         $query = $this->model
-            ->when($with != [], function ($query) use ($with) {
-                foreach ($with as $model) {
-                    $query->with($model);
+            ->when($relations != [], function ($query) use ($relations) {
+                foreach ($relations as $relation) {
+                    $query->with($relation);
                 }
         });
 
         if ($trashed) {
-            return $query->with($with)
+            return $query->with($relations)
                 ->withTrashed()
                 ->find($id);
         }
 
-        return $query->with($with)
+        return $query->with($relations)
             ->find($id);
     }
 

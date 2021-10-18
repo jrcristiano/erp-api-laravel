@@ -44,6 +44,9 @@ class Handler extends ExceptionHandler
 
     public function render($request, Throwable $e)
     {
+        $exceptionService = resolve(ExceptionService::class);
+        $exceptionService->save($e);
+
         if ($e instanceof FormRequestException) {
             return response()->json([
                 'success' => false,

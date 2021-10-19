@@ -2,10 +2,10 @@
 
 namespace App\Exceptions;
 
+use App\Services\ExceptionService;
 use Exception;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
-use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -45,8 +45,8 @@ class Handler extends ExceptionHandler
     public function render($request, Throwable $e)
     {
         $exceptionService = resolve(ExceptionService::class);
-        $exceptionService->save($e);
-
+        $exceptionService->createException($e);
+        
         if ($e instanceof FormRequestException) {
             return response()->json([
                 'success' => false,

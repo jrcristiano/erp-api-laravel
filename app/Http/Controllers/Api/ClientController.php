@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Services\ProductService;
+use App\Services\ClientService;
 use Illuminate\Http\Request as HttpRequest;
-use App\Http\Requests\ProductRequest as Request;
+use App\Http\Requests\ClientRequest as request;
 
-class ProductController extends Controller
+class ClientController extends Controller
 {
-    public function __construct(private ProductService $productService) { }
+    public function __construct(private ClientService $clientService) {}
 
     /**
      * Display a listing of the resource.
@@ -19,7 +19,7 @@ class ProductController extends Controller
     public function index(HttpRequest $request)
     {
         return response()->json([
-            'data' => $this->productService->fetchAll($request, ['category'])
+            'data' => $this->clientService->fetchAll($request)
         ]);
     }
 
@@ -31,10 +31,7 @@ class ProductController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->only(array_keys($request->rules()));
-        return response()->json([
-            'data' => $this->productService->save($data),
-        ], 201);
+        //
     }
 
     /**
@@ -45,9 +42,7 @@ class ProductController extends Controller
      */
     public function show($id)
     {
-        return response()->json([
-            'data' => $this->productService->findOrFail($id, ['category']),
-        ]);
+        //
     }
 
     /**
@@ -59,11 +54,7 @@ class ProductController extends Controller
      */
     public function update(Request $request, $id)
     {
-        $data = $request->only(array_keys($request->rules()));
-        $data['id'] = $id;
-        
-        $this->productService->save($data);
-        return response()->json([], 204);
+        //
     }
 
     /**
@@ -74,7 +65,6 @@ class ProductController extends Controller
      */
     public function destroy($id)
     {
-        $this->productService->delete($id);
-        return response()->json([], 204);
+        //
     }
 }

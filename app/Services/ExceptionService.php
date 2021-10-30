@@ -3,7 +3,7 @@
 namespace App\Services;
 
 use App\Repositories\ExceptionRepository;
-use Exception;
+use Throwable;
 
 class ExceptionService extends Service
 {
@@ -12,7 +12,7 @@ class ExceptionService extends Service
         parent::__construct($repository);
     }
 
-    public function createException(Exception $exception)
+    public function createException(Throwable $exception)
     {
         $data = [];
         $data['message'] = $exception->getMessage();

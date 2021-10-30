@@ -44,7 +44,7 @@ abstract class Repository
             foreach ($relations as $relation) {
                 $query->with($relation);
             }
-        }); 
+        });
     }
 
     public function first(array $relations = [])

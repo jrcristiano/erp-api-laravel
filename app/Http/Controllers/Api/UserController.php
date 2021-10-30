@@ -19,9 +19,8 @@ class UserController extends Controller
     public function index(HttpRequest $request)
     {
         return response()->json([
-            'status' => 200,
             'data' => $this->userService->fetchAll($request)
-        ], 200);
+        ]);
     }
 
 
@@ -29,7 +28,6 @@ class UserController extends Controller
     {
         $data = $request->only(array_keys($request->rules()));
         return response()->json([
-            'status' => 201,
             'data' => $this->userService->save($data),
         ], 201);
     }
@@ -43,9 +41,8 @@ class UserController extends Controller
     public function show($id)
     {
         return response()->json([
-            'status' => 200,
             'data' => $this->userService->findOrFail($id),
-        ], 200);
+        ]);
     }
 
     /**
@@ -62,9 +59,7 @@ class UserController extends Controller
         $data['id'] = $id;
 
         $this->userService->save($data);
-        return response()->json([
-            'status' => 200,
-        ], 200);
+        return response()->json([], 204);
     }
 
     /**
@@ -76,8 +71,6 @@ class UserController extends Controller
     public function destroy($id)
     {
         $this->userService->delete($id);
-        return response()->json([
-            'status' => 200,
-        ], 200);
+        return response()->json([], 204);
     }
 }

@@ -16,4 +16,9 @@ class Exception extends Model
         'trace',
         'exception',
     ];
+
+    protected $hidden = [
+        'updated_at',
+        'deleted_at'
+    ];
 }

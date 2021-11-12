@@ -2,10 +2,13 @@
 
 namespace App\Exceptions;
 
-use App\Services\ExceptionService;
 use Exception;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Auth\AuthenticationException;
+use Illuminate\Contracts\Support\Responsable;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Http\Exceptions\HttpResponseException;
+use Illuminate\Routing\Router;
+use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Throwable;
 
@@ -14,7 +17,7 @@ class Handler extends ExceptionHandler
     /**
      * A list of the exception types that are not reported.
      *
-     * @var array
+     * @var string[]
      */
     protected $dontReport = [
         //
@@ -23,7 +26,7 @@ class Handler extends ExceptionHandler
     /**
      * A list of the inputs that are never flashed for validation exceptions.
      *
-     * @var array
+     * @var string[]
      */
     protected $dontFlash = [
         'current_password',
@@ -43,43 +46,77 @@ class Handler extends ExceptionHandler
         });
     }
 
+        /**
+     * Render an exception into an HTTP response.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Throwable  $e
+     * @return \Symfony\Component\HttpFoundation\Response
+     *
+     * @throws \Throwable
+     */
     public function render($request, Throwable $e)
     {
-        $exceptionService = resolve(ExceptionService::class);
-        $exceptionService->createException($e);
-        
-        if ($e instanceof FormRequestException) {
-            return response()->json([
-                'success' => false,
-                'errors' => json_decode($e->getMessage())
-            ], 400);
+        // A fazer: salvar exceptions em uma tabela de LOGS
+
+        if ($request->isJson()) {
+            if ($e instanceof ValidationException) {
+                return response()->json([
+                    'error_message' => 'Os dados fornecidos não são válidos.', 
+                    'errors' => $e->validator->getMessageBag()
+                ], 422);
+            }
+            
+            if ($e instanceof NotFoundHttpException) {
+                return response()->json([
+                    'error_message' => 'Rota não encontrada.',
+                    'success' => false
+                ], 404);
+            }
+
+            if ($e instanceof Exception) {
+                return response()->json([
+                    'error_message' => $e->getMessage(),
+                    'success' => false
+                ], 500);
+            }
         }
 
-        if ($e instanceof ModelNotFoundException) {
-            return response()->json([
-                'success' => false,
-                'errors' => [
-                    'message' => $e->getMessage()
-                ]
-            ], 404);
+        return $this->getExtendedCodeOfRenderFunctionOfExceptionHandlerClass($e, $request);
+    }
+
+    private function getExtendedCodeOfRenderFunctionOfExceptionHandlerClass(Throwable $e, $request)
+    {
+        if (method_exists($e, 'render') && $response = $e->render($request)) {
+            return Router::toResponse($request, $response);
+        } elseif ($e instanceof Responsable) {
+            return $e->toResponse($request);
         }
 
-        if ($e instanceof NotFoundHttpException) {
-            return response()->json([
-                'success' => false,
-                'errors' => [
-                    'message' => $e->getMessage()
-                ]
-            ], 404);
+        $e = $this->prepareException($this->mapException($e));
+
+        foreach ($this->renderCallbacks as $renderCallback) {
+            foreach ($this->firstClosureParameterTypes($renderCallback) as $type) {
+                if (is_a($e, $type)) {
+                    $response = $renderCallback($e, $request);
+
+                    if (! is_null($response)) {
+                        return $response;
+                    }
+                }
+            }
         }
 
-        if ($e instanceof Exception) {
-            return response()->json([
-                'success' => false,
-                'errors' => [
-                    'message' => $e->getMessage()
-                ]
-            ], 400);
+        if ($e instanceof HttpResponseException) {
+            return $e->getResponse();
+        } else if ($e instanceof AuthenticationException) {
+            return $this->unauthenticated($request, $e);
+        } else if ($e instanceof ValidationException) {
+            return $this->convertValidationExceptionToResponse($e, $request);
         }
+
+        return $request->expectsJson()
+                    ? $this->prepareJsonResponse($request, $e)
+                    : $this->prepareResponse($request, $e);
     }
 }

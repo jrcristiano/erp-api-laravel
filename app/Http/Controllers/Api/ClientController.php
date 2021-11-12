@@ -31,7 +31,10 @@ class ClientController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $data = $request->only(array_keys($request->rules()));
+        return response()->json([
+            'data' => $this->clientService->save($data)
+        ], 201);
     }
 
     /**
@@ -42,7 +45,9 @@ class ClientController extends Controller
      */
     public function show($id)
     {
-        //
+        return response()->json([
+            'data' => $this->clientService->findOrFail($id)
+        ]);
     }
 
     /**
@@ -54,7 +59,13 @@ class ClientController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $data = $request->only(array_keys($request->rules()));
+        $data['id'] = $id;
+
+        $this->clientService->save($data);
+        return response()->json([
+            'data' => []
+        ], 204);
     }
 
     /**
@@ -65,6 +76,7 @@ class ClientController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $this->productService->delete($id);
+        return response()->json([], 204);
     }
 }

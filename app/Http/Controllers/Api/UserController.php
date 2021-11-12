@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Services\UserService;
-use App\Http\Requests\UserRequest as Request;
-use Illuminate\Http\Request as HttpRequest;
+use App\Http\Requests\UserRequest;
+use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
@@ -16,19 +16,23 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index(HttpRequest $request)
+    public function index(Request $request)
     {
         return response()->json([
-            'data' => $this->userService->fetchAll($request)
+            'data' => $this->userService->fetchAll($request->all()),
+            'success' => true
         ]);
     }
 
 
-    public function store(Request $request)
+    public function store(UserRequest $request)
     {
         $data = $request->only(array_keys($request->rules()));
+        $data['password'] = bcrypt($data['password']);
+        
         return response()->json([
             'data' => $this->userService->save($data),
+            'success' => true
         ], 201);
     }
 
@@ -42,24 +46,31 @@ class UserController extends Controller
     {
         return response()->json([
             'data' => $this->userService->findOrFail($id),
+            'success' => true
         ]);
     }
 
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param  \App\Http\Requests\UserRequest  $request
      * @param  int  $id
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, $id)
+    public function update(UserRequest $request, $id)
     {
         $data = $request->only(array_keys($request->rules()));
-        $data['password'] = bcrypt($data['password']);
         $data['id'] = $id;
+        
+        if (isset($data['password'])) {
+            $data['password'] = bcrypt($data['password']);
+        }
 
         $this->userService->save($data);
-        return response()->json([], 204);
+        return response()->json([
+            'data' => [],
+            'success' => true
+        ], 200);
     }
 
     /**
@@ -71,6 +82,9 @@ class UserController extends Controller
     public function destroy($id)
     {
         $this->userService->delete($id);
-        return response()->json([], 204);
+        return response()->json([
+            'data' => [],
+            'success' => true
+        ], 200);
     }
 }

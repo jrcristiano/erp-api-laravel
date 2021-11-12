@@ -15,7 +15,7 @@ class CreateExceptionsTable extends Migration
     {
         Schema::create('exceptions', function (Blueprint $table) {
             $table->id();
-            $table->string('message');
+            $table->longText('message');
             $table->integer('line');
             $table->string('code');
             $table->text('trace');

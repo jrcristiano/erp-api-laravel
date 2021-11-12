@@ -19,9 +19,8 @@ class CategoryController extends Controller
     public function index(HttpRequest $request)
     {
         return response()->json([
-            'status' => 200,
             'data' => $this->categoryService->fetchAll($request, ['products'])
-        ]);
+        ], 200);
     }
 
     /**
@@ -34,7 +33,6 @@ class CategoryController extends Controller
     {
         $data = $request->only(array_keys($request->rules()));
         return response()->json([
-            'status' => 201,
             'data' => $this->categoryService->save($data),
         ], 201);
     }
@@ -48,7 +46,6 @@ class CategoryController extends Controller
     public function show($id)
     {
         return response()->json([
-            'status' => 200,
             'data' => $this->categoryService->findOrFail($id),
         ], 200);
     }
@@ -66,9 +63,7 @@ class CategoryController extends Controller
         $data['id'] = $id;
 
         $this->categoryService->save($data);
-        return response()->json([
-            'status' => 200,
-        ], 200);
+        return response()->json([], 204);
     }
 
     /**
@@ -80,8 +75,6 @@ class CategoryController extends Controller
     public function destroy($id)
     {
         $this->categoryService->delete($id);
-        return response()->json([
-            'status' => 200,
-        ], 200);
+        return response()->json([], 204);
     }
 }

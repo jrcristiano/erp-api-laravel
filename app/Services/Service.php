@@ -4,37 +4,31 @@ namespace App\Services;
 
 use App\Repositories\Repository;
 use Exception;
-use Illuminate\Http\Request;
 
 abstract class Service
 {
     public function __construct(protected Repository $repository) {}
-    
-    public function paginate(int $perPage = 25)
-    {
-        return $this->repository->paginate($perPage);
-    }
 
-    public function fetchAll(Request $request, array $relations = [])
+    public function fetchAll(array $filter = [], array $relations = [])
     {
         try {
-            $filters = $this->filters($request);
+            $filters = $this->filters($filter);
             return $this->repository->fetchAll($filters, $relations);
 
         } catch (Exception $exception) {
-            $this->saveException($exception);
-            throw new Exception('Erro ao buscar lista de dados: parâmetros inválidos.');
+            throw new Exception("Erro ao buscar dados na tabela {$this->repository->getTableName()}: parâmetros inválidos.");
         }
     }
 
     public function first(array $relations = [])
     {
+        
         try {
             return $this->repository->first($relations);
 
         } catch (Exception $exception) {
-            $this->saveException($exception);
-            throw new Exception('Erro ao buscar dados relacionados por meio da variável $relations.');
+            $relations = implode(', ', $relations);
+            throw new Exception("Erro ao buscar dados relacionados a(s) tabela(s) {$relations}.");
         }
     }
 
@@ -44,8 +38,7 @@ abstract class Service
             return $this->repository->findOrFail($id, $relations);
 
         } catch (Exception $exception) {
-            $this->saveException($exception);
-            throw new Exception("Não há resultados correspondentes para o id {$id}.");
+            throw new Exception("Não há resultados correspondentes para id {$id}.");
         }
     }
 
@@ -55,8 +48,7 @@ abstract class Service
             return $this->repository->find($id, $relations);
 
         } catch (Exception $exception) {
-            $this->saveException($exception);
-            throw new Exception("Não há resultados correspondentes para o id {$id}.");
+            throw new Exception("Não há resultados correspondentes para id {$id}.");
         }
     }
 
@@ -68,8 +60,7 @@ abstract class Service
             return $this->create($data);    
         }
 
-        $this->update($data);
-        return $data['id'];
+        return $this->update($data);
     }
 
     public function create(array $data)
@@ -78,8 +69,7 @@ abstract class Service
             return $this->repository->create($data);
 
         } catch (Exception $exception) {
-            $this->saveException($exception);
-            throw new Exception('Erro ao realizar cadastro.');
+            throw new Exception("Erro ao cadastrar dados na tabela {$this->repository->getTableName()}.");
         }
     }
 
@@ -89,8 +79,7 @@ abstract class Service
             return $this->repository->update($data);
 
         } catch (Exception $exception) {
-            $this->saveException($exception);
-            throw new Exception('Erro ao realizar cadastro.');
+            throw new Exception("Erro ao atualizar dados na tabela {$this->repository->getTableName()}.");
         }
     }
 
@@ -100,8 +89,7 @@ abstract class Service
             return $this->repository->updateOrCreate($data);
 
         } catch (Exception $exception) {
-            $this->saveException($exception);
-            throw new Exception('Erro ao atualizar ou criar recurso.');
+            throw new Exception("Erro ao atualizar ou criar dado na tabela{$this->repository->getTableName()}.");
         }
     }
 
@@ -111,8 +99,7 @@ abstract class Service
             return $this->repository->firstOrCreate($data);
 
         } catch (Exception $exception) {
-            $this->saveException($exception);
-            throw new Exception('Erro ao retornar primeiro ou criar recurso.');
+            throw new Exception("Erro ao cadastrar ou retornar primeiro recurso na tabela {$this->repository->getTableName()}.");
         }
     }
 
@@ -122,8 +109,7 @@ abstract class Service
             $this->repository->delete($id);
             
         } catch(Exception $exception) {
-            $this->saveException($exception);
-            throw new Exception("Erro ao remover: não há resultados correspondentes para o id {$id}.");
+            throw new Exception("Erro ao remover: sem resultados correspondentes para id {$id}.");
         }
     }
 
@@ -133,8 +119,7 @@ abstract class Service
             return $this->repository->forceDelete($id);
 
         } catch (Exception $exception) {
-            $this->saveException($exception);
-            throw new Exception("Erro ao forçar remoção: não há resultados correspondentes para o id {$id}.");
+            throw new Exception("Erro ao forçar remoção: sem resultados correspondentes para id {$id}.");
         }
     }
 
@@ -144,8 +129,7 @@ abstract class Service
             return $this->repository->restore($id);
 
         } catch (Exception $exception) {
-            $this->saveException($exception);
-            throw new Exception('Erro ao restaurar recurso:  não há resultados correspondentes para o id {$id}.');
+            throw new Exception("Erro ao restaurar o recurso: sem resultados correspondentes para id {$id}.");
         }
     }
 
@@ -154,22 +138,15 @@ abstract class Service
         return $this->repository->getModel();
     }
 
-    protected function filters(Request $request): array
+    protected function filters(array $filter): array
     {
-        $filter['columns'] = $request->get('columns') ?? '*';
-        $filter['orderBy'] = $request->get('orderBy') ?? 'asc';
-        $filter['sortBy'] = $request->get('sortBy') ?? 'id';
-        $filter['paginated'] = $request->get('paginated') == 'true' ? true : false;
-        $filter['perPage'] = $request->get('perPage') ?? 25;
-        $filter['limit'] = $request->get('limit') ?? 25;
-        $filter['offset'] = $request->get('offset') ?? null;
+        $filter['columns'] = isset($filter['columns']) ? explode(',', $filter['columns']) : '*';
+        $filter['orderBy'] = $filter['orderBy'] ?? 'desc';
+        $filter['sortBy'] = $filter['sortBy'] ?? 'id';
+        $filter['paginated'] = isset($filter['paginated']) && $filter['paginated'] == 'true' ? true : false;
+        $filter['perPage'] = $filter['perPage'] ?? 25;
+        $filter['limit'] = $filter['limit'] ?? 25;
+        $filter['offset'] = $filter['offset'] ?? 0;
         return $filter;
-    }
-
-    private function saveException(Exception $exception)
-    {
-        
-        $exceptionService = resolve(ExceptionService::class);
-        return $exceptionService->createException($exception);
     }
 }

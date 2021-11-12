@@ -44,7 +44,7 @@ abstract class Repository
             foreach ($relations as $relation) {
                 $query->with($relation);
             }
-        });
+        }); 
     }
 
     public function first(array $relations = [])
@@ -137,5 +137,10 @@ abstract class Repository
     public function getModel()
     {
         return $this->model;
+    }
+
+    public function getTableName()
+    {
+        return $this->model->getTable(); 
     }
 }
